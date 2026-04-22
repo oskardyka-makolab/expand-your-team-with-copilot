@@ -569,6 +569,40 @@ document.addEventListener("DOMContentLoaded", () => {
         `
         }
       </div>
+      <div class="share-actions" aria-label="Share ${name}">
+        <button
+          class="share-button"
+          data-share-platform="native"
+          data-activity-name="${encodeURIComponent(name)}"
+          aria-label="Quick share ${name}"
+        >
+          Quick Share
+        </button>
+        <button
+          class="share-button"
+          data-share-platform="whatsapp"
+          data-activity-name="${encodeURIComponent(name)}"
+          aria-label="Share ${name} on WhatsApp"
+        >
+          WhatsApp
+        </button>
+        <button
+          class="share-button"
+          data-share-platform="facebook"
+          data-activity-name="${encodeURIComponent(name)}"
+          aria-label="Share ${name} on Facebook"
+        >
+          Facebook
+        </button>
+        <button
+          class="share-button"
+          data-share-platform="copy"
+          data-activity-name="${encodeURIComponent(name)}"
+          aria-label="Copy link for ${name}"
+        >
+          Copy Link
+        </button>
+      </div>
     `;
 
     // Add click handlers for delete buttons
@@ -587,7 +621,109 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    const shareButtons = activityCard.querySelectorAll(".share-button");
+    shareButtons.forEach((button) => {
+      button.addEventListener("click", handleShareActivity);
+    });
+
     activitiesList.appendChild(activityCard);
+  }
+
+  function getShareContent(activityName, details) {
+    const activityUrl = `${window.location.origin}/?activity=${encodeURIComponent(
+      activityName
+    )}`;
+    const shareText = `Check out ${activityName} at Mergington High School! ${details.description} Schedule: ${formatSchedule(
+      details
+    )}`;
+
+    return {
+      title: `Mergington Activity: ${activityName}`,
+      text: shareText,
+      url: activityUrl,
+    };
+  }
+
+  async function copyTextToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    const fallbackTextArea = document.createElement("textarea");
+    fallbackTextArea.value = text;
+    fallbackTextArea.style.position = "fixed";
+    fallbackTextArea.style.left = "-9999px";
+    document.body.appendChild(fallbackTextArea);
+    fallbackTextArea.focus();
+    fallbackTextArea.select();
+    // Deprecated API used as a compatibility fallback for older browsers
+    // that do not support navigator.clipboard (mainly legacy WebView/IE-era environments).
+    document.execCommand("copy");
+    document.body.removeChild(fallbackTextArea);
+  }
+
+  async function handleShareActivity(event) {
+    const platform = event.currentTarget.dataset.sharePlatform;
+    const encodedActivityName = event.currentTarget.dataset.activityName;
+    const activityName = decodeURIComponent(encodedActivityName);
+    const details = allActivities[activityName];
+
+    if (!details) {
+      showMessage("Unable to share this activity right now.", "error");
+      return;
+    }
+
+    const supportedPlatforms = new Set([
+      "native",
+      "copy",
+      "whatsapp",
+      "facebook",
+    ]);
+    if (!supportedPlatforms.has(platform)) {
+      showMessage("This share option is not available.", "error");
+      return;
+    }
+
+    const shareContent = getShareContent(activityName, details);
+
+    try {
+      if (platform === "native") {
+        if (navigator.share) {
+          await navigator.share(shareContent);
+          return;
+        }
+
+        await copyTextToClipboard(shareContent.url);
+        showMessage("Share link copied to clipboard.", "success");
+        return;
+      }
+
+      if (platform === "copy") {
+        await copyTextToClipboard(shareContent.url);
+        showMessage("Share link copied to clipboard.", "success");
+        return;
+      }
+
+      const encodedUrl = encodeURIComponent(shareContent.url);
+      const encodedText = encodeURIComponent(shareContent.text);
+      let shareUrl = "";
+
+      if (platform === "whatsapp") {
+        shareUrl = `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
+      } else if (platform === "facebook") {
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+      }
+
+      window.open(shareUrl, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      if (error && error.name === "AbortError") {
+        return;
+      }
+
+      showMessage("Failed to share activity. Please try again.", "error");
+      console.error("Error sharing activity:", error);
+    }
   }
 
   // Event listeners for search and filter
