@@ -24,6 +24,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginForm = document.getElementById("login-form");
   const closeLoginModal = document.querySelector(".close-login-modal");
   const loginMessage = document.getElementById("login-message");
+  const themeToggleButton = document.getElementById("theme-toggle");
+  const themeToggleLabel = document.getElementById("theme-toggle-label");
+  const THEME_LIGHT = "light";
+  const THEME_DARK = "dark";
+  const validThemes = new Set([THEME_LIGHT, THEME_DARK]);
 
   // Activity categories with corresponding colors
   const activityTypes = {
@@ -166,6 +171,58 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Update the theme button text and icon
+  function updateThemeToggleUI(theme) {
+    const isDarkMode = theme === THEME_DARK;
+    const themeIcon = themeToggleButton.querySelector(".theme-icon");
+
+    themeIcon.textContent = isDarkMode ? "☀️" : "🌙";
+    themeToggleLabel.textContent = isDarkMode ? "Light Mode" : "Dark Mode";
+    themeToggleButton.setAttribute(
+      "aria-label",
+      isDarkMode ? "Switch to light mode" : "Switch to dark mode"
+    );
+  }
+
+  // Read saved theme safely
+  function getSavedThemePreference() {
+    try {
+      return localStorage.getItem("themePreference");
+    } catch (error) {
+      console.error("Unable to read theme preference:", error);
+      return null;
+    }
+  }
+
+  // Save theme safely
+  function saveThemePreference(theme) {
+    try {
+      localStorage.setItem("themePreference", theme);
+    } catch (error) {
+      console.error("Unable to save theme preference:", error);
+    }
+  }
+
+  // Apply selected theme and persist it
+  function applyTheme(theme) {
+    const normalizedTheme = validThemes.has(theme) ? theme : THEME_LIGHT;
+
+    if (normalizedTheme === THEME_DARK) {
+      document.body.classList.add("dark-mode");
+    } else {
+      document.body.classList.remove("dark-mode");
+    }
+
+    updateThemeToggleUI(normalizedTheme);
+    saveThemePreference(normalizedTheme);
+  }
+
+  // Initialize theme from localStorage
+  function initializeTheme() {
+    const savedTheme = getSavedThemePreference();
+    applyTheme(savedTheme || THEME_LIGHT);
+  }
+
   // Login function
   async function login(username, password) {
     try {
@@ -238,6 +295,10 @@ document.addEventListener("DOMContentLoaded", () => {
   loginButton.addEventListener("click", openLoginModal);
   logoutButton.addEventListener("click", logout);
   closeLoginModal.addEventListener("click", closeLoginModalHandler);
+  themeToggleButton.addEventListener("click", () => {
+    const isDarkMode = document.body.classList.contains("dark-mode");
+    applyTheme(isDarkMode ? THEME_LIGHT : THEME_DARK);
+  });
 
   // Close login modal when clicking outside
   window.addEventListener("click", (event) => {
@@ -998,6 +1059,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // Initialize app
+  initializeTheme();
   checkAuthentication();
   initializeFilters();
   fetchActivities();
