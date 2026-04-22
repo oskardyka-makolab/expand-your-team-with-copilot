@@ -657,6 +657,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.appendChild(fallbackTextArea);
     fallbackTextArea.focus();
     fallbackTextArea.select();
+    // Deprecated API used as a compatibility fallback for older browsers
+    // that do not support navigator.clipboard (mainly legacy WebView/IE-era environments).
     document.execCommand("copy");
     document.body.removeChild(fallbackTextArea);
   }
@@ -672,13 +674,23 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    const supportedPlatforms = new Set([
+      "native",
+      "copy",
+      "whatsapp",
+      "facebook",
+    ]);
+    if (!supportedPlatforms.has(platform)) {
+      showMessage("This share option is not available.", "error");
+      return;
+    }
+
     const shareContent = getShareContent(activityName, details);
 
     try {
       if (platform === "native") {
         if (navigator.share) {
           await navigator.share(shareContent);
-          showMessage("Activity shared successfully.", "success");
           return;
         }
 
@@ -701,11 +713,6 @@ document.addEventListener("DOMContentLoaded", () => {
         shareUrl = `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
       } else if (platform === "facebook") {
         shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
-      }
-
-      if (!shareUrl) {
-        showMessage("This share option is not available.", "error");
-        return;
       }
 
       window.open(shareUrl, "_blank", "noopener,noreferrer");
