@@ -120,6 +120,17 @@ initial_activities = {
         "max_participants": 10,
         "participants": ["james@mergington.edu", "benjamin@mergington.edu"]
     },
+    "Manga Maniacs": {
+        "description": "Step into the world of panels and ink! Dive into epic shonen battles, heartfelt shojo romances, and mind-bending seinen stories. Whether you're a seasoned otaku or just discovering the art of manga, join us to read, discuss, and celebrate the greatest graphic storytelling tradition from Japan.",
+        "schedule": "Tuesdays, 5:00 PM - 6:00 PM",
+        "schedule_details": {
+            "days": ["Tuesday"],
+            "start_time": "17:00",
+            "end_time": "18:00"
+        },
+        "max_participants": 25,
+        "participants": []
+    },
     "Debate Team": {
         "description": "Develop public speaking and argumentation skills",
         "schedule": "Fridays, 3:30 PM - 5:30 PM",
@@ -186,4 +197,3 @@ initial_teachers = [
         "role": "admin"
     }
 ]
-
